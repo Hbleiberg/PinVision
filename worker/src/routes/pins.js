@@ -1,5 +1,6 @@
 import { json, errorResponse } from '../index.js';
 import { signPhotoPath } from '../auth.js';
+import { upsertPinVector, deletePinVector } from '../embeddings.js';
 import {
   listPins,
   getPin,
@@ -87,16 +88,18 @@ export async function handlePinCreate(request, env) {
     removed_at: null,
   };
 
-  // Write order: R2 → D1 (→ Vectorize, added by the similarity phase). If a
-  // later write fails, compensate for the earlier ones so no orphaned record
-  // is ever left behind.
+  // Write order: R2 → D1 → Vectorize. If a later write fails, compensate for
+  // the earlier ones so no orphaned record is ever left behind.
   const written = [];
+  let rowInserted = false;
   try {
     await env.PHOTOS.put(photoKey, photoBytes, { httpMetadata: { contentType: 'image/jpeg' } });
     written.push(photoKey);
     await env.PHOTOS.put(thumbKey, thumbBytes, { httpMetadata: { contentType: 'image/jpeg' } });
     written.push(thumbKey);
     await insertPin(env.DB, pin);
+    rowInserted = true;
+    await upsertPinVector(env, id, pin.canonical_description);
   } catch (err) {
     console.error('Pin create failed, rolling back:', err.stack || err);
     for (const key of written) {
@@ -106,9 +109,13 @@ export async function handlePinCreate(request, env) {
         console.error(`Rollback delete failed for ${key}:`, cleanupErr);
       }
     }
-    try {
-      await deletePinRow(env.DB, id);
-    } catch { /* row may not exist; best-effort */ }
+    if (rowInserted) {
+      try {
+        await deletePinRow(env.DB, id);
+      } catch (cleanupErr) {
+        console.error('Rollback row delete failed:', cleanupErr);
+      }
+    }
     return errorResponse('Failed to save pin — nothing was stored', 500);
   }
 
@@ -148,6 +155,25 @@ export async function handlePinPatch(id, request, env) {
 
   await updatePin(env.DB, id, fields);
   const pin = await getPin(env.DB, id);
+
+  // The vector must track the matching text. Re-embed when the description
+  // changed; a failure here leaves a stale vector, so surface it.
+  if (
+    'canonical_description' in fields &&
+    fields.canonical_description &&
+    fields.canonical_description !== existing.canonical_description
+  ) {
+    try {
+      await upsertPinVector(env, id, fields.canonical_description);
+    } catch (err) {
+      console.error('Vector re-embed failed after edit:', err.stack || err);
+      return json(
+        { pin: await withPhotoUrls(pin, env), warning: 'Saved, but similarity index update failed — edit the description again to retry' },
+        200
+      );
+    }
+  }
+
   return json({ pin: await withPhotoUrls(pin, env) });
 }
 
@@ -156,7 +182,13 @@ export async function handlePinDelete(id, searchParams, env) {
   if (!existing) return errorResponse('Pin not found', 404);
 
   if (searchParams.get('hard') === 'true') {
-    // Purge: photos first (idempotent), then the row.
+    // Purge: vector and photos first (both idempotent), then the row.
+    try {
+      await deletePinVector(env, id);
+    } catch (err) {
+      console.error('Vector delete failed during purge:', err.stack || err);
+      return errorResponse('Could not remove the pin from the similarity index — try again', 500);
+    }
     if (existing.photo_key) await env.PHOTOS.delete(existing.photo_key);
     if (existing.thumb_key) await env.PHOTOS.delete(existing.thumb_key);
     await deletePinRow(env.DB, id);
