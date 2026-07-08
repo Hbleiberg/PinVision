@@ -1,6 +1,7 @@
 name = "pinvault-api"
 main = "src/index.js"
 compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"] # required by @anthropic-ai/sdk
 
 # Comma-separated list of allowed browser origins (the GitHub Pages site).
 # Add http://localhost:8788 or similar while developing locally.
