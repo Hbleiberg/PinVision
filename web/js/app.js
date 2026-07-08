@@ -1,6 +1,7 @@
 import { $, $all, toast } from './util.js';
 import { getToken, login } from './auth.js';
 import { UNAUTHORIZED_EVENT } from './api.js';
+import { isDemo, enterDemo, exitDemo } from './demo.js';
 
 const VIEWS = ['login', 'identify', 'collection', 'detail', 'form', 'removed'];
 
@@ -45,9 +46,36 @@ function initTabs() {
   }
 }
 
+function updateDemoChrome() {
+  const on = isDemo();
+  document.body.classList.toggle('demo', on);
+  $('#demo-banner').hidden = !on;
+}
+
+function initDemo() {
+  $('#demo-enter').addEventListener('click', () => {
+    enterDemo();
+    history.replaceState(null, '', '#demo');
+    updateDemoChrome();
+    showView('identify');
+    toast('Demo mode — this is sample data');
+  });
+  $('#demo-exit').addEventListener('click', () => {
+    exitDemo();
+    history.replaceState(null, '', location.pathname);
+    updateDemoChrome();
+    showView('login');
+  });
+}
+
 async function boot() {
   initLogin();
   initTabs();
+  initDemo();
+
+  // A shareable #demo link drops straight into demo mode.
+  if (location.hash.replace('#', '') === 'demo') enterDemo();
+  updateDemoChrome();
 
   window.addEventListener(UNAUTHORIZED_EVENT, () => {
     toast('Please log in again', true);
@@ -62,7 +90,7 @@ async function boot() {
     import('./removed.js').catch((e) => console.error('removed module', e)),
   ]);
 
-  showView(getToken() ? 'identify' : 'login');
+  showView(isDemo() || getToken() ? 'identify' : 'login');
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});

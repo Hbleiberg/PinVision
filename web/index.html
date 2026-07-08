@@ -25,6 +25,10 @@
         <button type="submit" class="btn btn-primary btn-block">Unlock</button>
       </form>
       <p id="login-error" class="error" hidden></p>
+      <p class="login-demo">
+        <button type="button" id="demo-enter" class="link-btn">Try the demo &rarr;</button>
+      </p>
+      <p class="muted small">Explore the UI with sample data — no login or backend needed.</p>
     </div>
   </section>
 
@@ -91,6 +95,11 @@
     <button data-view="collection" class="tab">&#128204;<span>Collection</span></button>
     <button data-view="removed" class="tab">&#128260;<span>Traded</span></button>
   </nav>
+
+  <div id="demo-banner" hidden>
+    <span>&#127917; Demo mode — sample data.</span>
+    <button type="button" id="demo-exit" class="link-btn">Exit</button>
+  </div>
 
   <div id="toast" hidden></div>
 

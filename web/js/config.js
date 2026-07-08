@@ -1,6 +1,6 @@
 // Deployment configuration. Bump VERSION on every deploy — the service worker
 // uses it to invalidate the offline shell cache.
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 
 // The Worker API origin. Replace with your workers.dev subdomain (or custom
 // domain) after the first `wrangler deploy`.

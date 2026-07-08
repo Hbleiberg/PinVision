@@ -1,10 +1,15 @@
 import { API_BASE } from './config.js';
 import { getToken, clearToken } from './auth.js';
+import { isDemo, demoApi } from './demo.js';
 
 // Fired when the API returns 401 so the app can drop back to the login view.
 export const UNAUTHORIZED_EVENT = 'pinvault:unauthorized';
 
-export async function api(path, { method = 'GET', body } = {}) {
+export async function api(path, opts = {}) {
+  // In demo mode every request is served by the in-memory fake API.
+  if (isDemo()) return demoApi(path, opts);
+
+  const { method = 'GET', body } = opts;
   const headers = { Authorization: `Bearer ${getToken()}` };
   let payload;
   if (body !== undefined) {
@@ -28,5 +33,7 @@ export async function api(path, { method = 'GET', body } = {}) {
 }
 
 export function photoUrl(signedPath) {
+  // Demo pins (and pins added during the demo) carry data: URIs directly.
+  if (typeof signedPath === 'string' && signedPath.startsWith('data:')) return signedPath;
   return `${API_BASE}${signedPath}`;
 }

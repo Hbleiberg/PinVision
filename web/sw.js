@@ -2,7 +2,7 @@
 // everything else (the API is cross-origin and identify always needs network).
 // VERSION must be bumped in lockstep with js/config.js on every deploy — it
 // keys the cache, so stale shells are evicted on activate.
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const CACHE = `pinvault-shell-${VERSION}`;
 
 const SHELL = [
@@ -15,6 +15,7 @@ const SHELL = [
   './js/auth.js',
   './js/collection.js',
   './js/config.js',
+  './js/demo.js',
   './js/detail.js',
   './js/form.js',
   './js/identify.js',

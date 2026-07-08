@@ -13,6 +13,11 @@
 
 * { box-sizing: border-box; }
 
+/* The `hidden` attribute must beat ID-level display rules (e.g. #view-login
+   uses display:flex, which would otherwise override [hidden]'s display:none
+   and leave hidden views stacked on screen). */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -64,6 +69,38 @@ html, body {
 .login-box { width: 100%; max-width: 320px; text-align: center; }
 .login-box h1 { font-size: 2.2rem; margin-bottom: 4px; }
 .login-box form { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+.login-demo { margin-top: 22px; }
+.small { font-size: 0.8rem; }
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* Demo mode banner */
+#demo-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 8px 12px;
+  padding-top: calc(8px + env(safe-area-inset-top));
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+#demo-banner .link-btn { color: #fff; }
+body.demo .view { padding-top: calc(46px + env(safe-area-inset-top)); }
 
 input, select, textarea {
   font-size: 1rem;
