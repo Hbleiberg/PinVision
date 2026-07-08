@@ -1,2 +1,2 @@
-// Implemented in a later phase.
+// Implemented in the vision extraction phase.
 export {};
