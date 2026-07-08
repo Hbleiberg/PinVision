@@ -1,0 +1,30 @@
+name = "pinvault-api"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"] # required by @anthropic-ai/sdk
+
+# Comma-separated list of allowed browser origins (the GitHub Pages site).
+# Add http://localhost:8788 or similar while developing locally.
+[vars]
+ALLOWED_ORIGINS = "https://hbleiberg.github.io,http://localhost:8788"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pinvault"
+database_id = "REPLACE_WITH_D1_DATABASE_ID" # from `wrangler d1 create pinvault`
+
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "pinvault-photos"
+
+[[vectorize]]
+binding = "VECTORS"
+index_name = "pinvault-pins"
+
+[ai]
+binding = "AI"
+
+# Secrets (set with `wrangler secret put <NAME>`, never committed):
+#   ANTHROPIC_API_KEY  - Anthropic API key for vision extraction
+#   PASSPHRASE_HASH    - hex SHA-256 of the shared passphrase
+#   SESSION_SECRET     - long random string used to sign session tokens & photo URLs
